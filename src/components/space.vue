@@ -9,8 +9,11 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { cameraFocus } from '../utils/utils'
+import { cameraFocus, geoToVec3 } from '../utils/utils'
 
+
+const EARTH_RADIUS = 6378 * 1000; // Earth Radius: ≈ 6378 km
+const SPHERE_RADIUS = 63.78 // 3D Sphere radius in Vector 3
 // let geometry, material, cube;
 
 export default {
@@ -30,19 +33,14 @@ export default {
   methods: {
     init(){
       const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10000 );
+      const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.00001, 10000 );
 
 			const renderer = new THREE.WebGLRenderer({ antialias: true });
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			this.DOM.appendChild( renderer.domElement );
 
-			// const geometry = new THREE.BoxGeometry();
-			// const material = new THREE.MeshPhongMaterial( { color: 0x00ff00 } );
-			// const cube = new THREE.Mesh( geometry, material );
-			// scene.add( cube );
-
       // Lighting
-      const light = new THREE.AmbientLight( 0xffffff, .44 ); // soft white light
+      const light = new THREE.AmbientLight( 0xffffff, .74 ); // soft white light
       scene.add( light );
 
       // White directional light at half intensity shining from the top.
@@ -52,22 +50,31 @@ export default {
       // Add Control
       const controls = new OrbitControls( camera, renderer.domElement );
 
-			camera.position.z = 5;
+			camera.position.z = SPHERE_RADIUS + 10;
+      camera.position.x = 0;
+      camera.position.y = SPHERE_RADIUS + 5;
       controls.update();
 
       // Earth
-      const earthGeometry = new THREE.SphereGeometry( 32, 32, 32 );
-      const earthMat = new THREE.MeshPhongMaterial( {
-        map: THREE.ImageUtils.loadTexture('assets/map/earth/highres98.jpg'),
-        bumpMap: THREE.ImageUtils.loadTexture('assets/map/earth/bump.jpg'),
-        bumpScale: 1,
+      const earthGeometry = new THREE.SphereBufferGeometry( SPHERE_RADIUS, SPHERE_RADIUS * 10, SPHERE_RADIUS * 10 );
+      const earthBaseMap = THREE.ImageUtils.loadTexture('assets/map/earth/2_no_clouds_4k.jpg');
+      earthBaseMap.magFilter = THREE.NearestFilter;
+
+      const earthBumpMap = THREE.ImageUtils.loadTexture('assets/map/earth/elev_bump_4k.jpg');
+      earthBumpMap.magFilter = THREE.NearestFilter;
+
+      const earthMat = new THREE.MeshPhongMaterial({
+        map: earthBaseMap,
+        bumpMap: THREE.ImageUtils.loadTexture('assets/map/earth/elev_bump_4k.jpg'),
+        bumpScale: SPHERE_RADIUS / 3,
         specularMap: THREE.ImageUtils.loadTexture('assets/map/earth/specular.png'),
-        specular: new THREE.Color('grey'),
-        shininess: 5,
-      } );
+        specular: new THREE.Color(0x00c9ff),
+        shininess: 15,
+      });
       const earth = new THREE.Mesh( earthGeometry, earthMat );
-      earth.position.x = -8;
-      earth.position.y = -32;
+      earth.rotation.y = -Math.PI / 2; // face prime meridian along Z axis
+      // earth.position.x = -8;
+      // earth.position.y = -32;
       scene.add( earth );
 
       // Load Model
@@ -75,11 +82,19 @@ export default {
 
       loader.load( './assets/models/iss/scene.gltf', function ( gltf ) {
 
+        // Load ISS model in gltf style
         const iss_model = gltf.scene;
-        // iss_model.position.x = -7;
-        iss_model.scale.set(.25, .25, .25)
 
-        scene.add( iss_model );
+        // Set ISS station position
+        const ratio = (SPHERE_RADIUS / EARTH_RADIUS) * 1;
+        iss_model.scale.set(ratio, ratio, ratio)
+
+        // Set ISS station by Latitude, Longtitude and altitude
+        const targetVec3 = geoToVec3(22.545369, 114.056742, 429000, SPHERE_RADIUS);
+
+        iss_model.position.set(targetVec3.x, targetVec3.y, targetVec3.z);
+
+        scene.add(iss_model);
         cameraFocus(iss_model, controls)
 
       }, undefined, function ( error ) {
@@ -91,8 +106,8 @@ export default {
 			const animate = function () {
 				requestAnimationFrame( animate );
 
-				earth.rotation.x += 0.0001;
-				earth.rotation.y += 0.0001;
+				// earth.rotation.x += 0.0001;
+				// earth.rotation.y += 0.0001;
 
         controls.update();
 

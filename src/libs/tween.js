@@ -7,6 +7,7 @@
  * Thank you all, you're awesome!
  */
 
+/* eslint-disable */
 
  var _Group = function () {
 	this._tweens = {};
