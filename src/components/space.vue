@@ -9,8 +9,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { cameraFocus, geoToVec3 } from '../utils/utils'
-
+import { cameraFocus, geoToVec3 } from '../utils/utils';
+import { CSSPosition } from '../remote';
 
 const EARTH_RADIUS = 6378 * 1000; // Earth Radius: ≈ 6378 km
 const SPHERE_RADIUS = 63.78 // 3D Sphere radius in Vector 3
@@ -60,13 +60,13 @@ export default {
       const earthBaseMap = THREE.ImageUtils.loadTexture('assets/map/earth/2_no_clouds_4k.jpg');
       earthBaseMap.magFilter = THREE.NearestFilter;
 
-      const earthBumpMap = THREE.ImageUtils.loadTexture('assets/map/earth/elev_bump_4k.jpg');
-      earthBumpMap.magFilter = THREE.NearestFilter;
+      // const earthBumpMap = THREE.ImageUtils.loadTexture('assets/map/earth/elev_bump_4k.jpg');
+      // earthBumpMap.magFilter = THREE.NearestFilter;
 
       const earthMat = new THREE.MeshPhongMaterial({
         map: earthBaseMap,
-        bumpMap: THREE.ImageUtils.loadTexture('assets/map/earth/elev_bump_4k.jpg'),
-        bumpScale: SPHERE_RADIUS / 3,
+        // bumpMap: THREE.ImageUtils.loadTexture('assets/map/earth/elev_bump_4k.jpg'),
+        // bumpScale: SPHERE_RADIUS / 3,
         specularMap: THREE.ImageUtils.loadTexture('assets/map/earth/specular.png'),
         specular: new THREE.Color(0x00c9ff),
         shininess: 15,
